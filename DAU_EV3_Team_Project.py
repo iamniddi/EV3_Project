@@ -47,12 +47,49 @@ def startLine():
             break
     return
 
-def lineOut():
+def lineOut(a):#0은 양쪽 아웃 1은 오른쪽 2는 왼쪽 아웃
     while True:
-        if(right_cs.color()!=Color.BLACK and left_cs.color()!=Color.BLACK):
+        if(a==0):
+            if(right_cs.color()!=Color.BLACK and left_cs.color()!=Color.BLACK):
+                robot.stop()
+                break
+            robot.straight(10)
+        elif(a==1):
+            if(right_cs.color()!=Color.BLACK):
+                robot.stop()
+                break
+            robot.straight(10)
+        else:
+            if(left_cs.color()!=Color.BLACK):
+                robot.stop()
+                break
+            robot.straight(10)
+    return
+    # left_motor.run(180) 한쪽 모터만 쓰는 예제
+    # while True:
+    #     if(a==0):
+    #         if(right_cs.color()!=Color.BLACK and left_cs.color()!=Color.BLACK):
+    #             robot.stop()
+    #             break
+    #         robot.straight(10)
+    #     elif(a==1):
+    #         if(right_cs.color()!=Color.BLACK):
+    #             right_motor.stop(Stop.BRAKE)
+    #             break
+    #         right_motor.run(10)
+    #     else:
+    #         if(left_cs.color()!=Color.BLACK):
+    #             left_motor.stop(Stop.BRAKE)
+    #             break
+    #         left_motor.run(10)
+    # return
+
+def turnLine():
+    while True:
+        if(right_cs.color()==Color.BLACK and left_cs.color()==Color.BLACK):
             robot.stop()
             break
-        robot.straight(10)
+        robot.straight(-10)
     return
 
 def goLeft(num):
@@ -91,22 +128,47 @@ def goRight(num):
 
 def goRed(num):
     goLeft(1)
+    robot.turn(90)
     while True:
-        deviation = left_cs.reflection() - threshold
+        deviation = right_cs.reflection() - threshold
         turn_rate = PROPORTIONAL_GAIN * deviation
         robot.drive(DRIVE_SPEED, turn_rate)
-        if(right_cs.color()==Color.RED):
+        if(left_cs.color()==Color.RED):
+            robot.straight(80)
+            grap(-1)
+            robot.straight(-80)
+            grap(1)
             break
     wait(10)
 
 def goBlue(num):
+    goLeft(2)
+    robot.turn(90)
     while True:
-        deviation = left_cs.reflection() - threshold
+        deviation = right_cs.reflection() - threshold
         turn_rate = PROPORTIONAL_GAIN * deviation
         robot.drive(DRIVE_SPEED, turn_rate)
-        if(right_cs.color()==Color.BLUE):
+        if(left_cs.color()==Color.BLUE):
+            robot.straight(80)
+            grap(-1)
+            robot.straight(-80)
+            grap(1)
             break
     wait(10)
+
+def goStart():
+    turnLine()
+    robot.turn(90)
+    if(garbage==1):
+        goLeft(2)
+        robot.turn(90)
+        lineOut(1)
+        return
+    elif(garbage==2):
+        goLeft(3)
+        robot.turn(90)
+        lineOut(1)
+        return
 
 def grap(num):
     grab_moter.run_until_stalled(num*200, then=Stop.COAST, duty_limit=50)
@@ -151,6 +213,35 @@ def seeGarbage():
             print(garbage)
             return garbage
 
+def noLineAct():
+    saveLine=0
+    savePoint=0
+    countCheck==0
+    while True:
+        saveLine+=1
+        distance=ultra.distance()
+        robot.drive(DRIVE_SPEED, 0)
+        if distance<120:
+            grap(1)
+            print("거리확인")
+            break
+        wait(10)
+    robot.turn(180)
+    while True:
+        saveLine-=1
+        distance=ultra.distance()
+        robot.drive(DRIVE_SPEED, 0)
+        if(left_cs.color()==Color.BLACK and countCheck==0):
+            countCheck=1
+            savePoint=1
+        if(left_cs.color()!=Color.BLACK and countCheck==1):
+            countCheck=0
+        if(savePoint==1 and countCheck == 0):
+            robot.stop()
+            break
+        wait(10)
+    return
+
 def tuenBack():
     pass
 
@@ -162,7 +253,8 @@ def onePointAct():
     startLine()
     goLeft(1)
     if(objectDetection()==0):
-        #2번포인트
+        goLeft(1)
+        twoPointAct()
         return
     elif(objectDetection()==1):
         seeGarbage()
@@ -170,23 +262,84 @@ def onePointAct():
         robot.turn(180)
         goRight(1)
         robot.turn(-90)
-        lineOut()
-    
+        lineOut(1)
+        if(garbage==1):
+            goRed()
+            goStart()
+            goLeft(2)
+            twoPointAct()
+        elif(garbage==2):
+            goBlue()
+            goStart()
+            goLeft(2)
+            twoPointAct()
 
+def twoPointAct():
+    if(objectDetection()==0):
+        goLeft(1)
+        threePointAct()
+        return
+    elif(objectDetection()==1):
+        seeGarbage()
+        goGarbageLeft()
+        robot.turn(180)
+        goRight(2)
+        robot.turn(-90)
+        lineOut(1)
+        if(garbage==1):
+            goRed()
+            goStart()
+            goLeft(3)
+            threePointAct()
+        elif(garbage==2):
+            goBlue()
+            goStart()
+            goLeft(3)
+            threePointAct()
 
-while True:
-    # # Calculate the deviation from the threshold.
-    # deviation = left_cs.reflection() - threshold
+def threePointAct():
+    if(objectDetection()==0):
+        goLeft(1)
+        fourPointAct()
+        return
+    elif(objectDetection()==1):
+        seeGarbage()
+        goGarbageLeft()
+        robot.turn(180)
+        goRight(3)
+        robot.turn(-90)
+        lineOut(1)
+        if(garbage==1):
+            goRed()
+            goStart()
+            goLeft(4)
+            fourPointAct()
+        elif(garbage==2):
+            goBlue()
+            goStart()
+            goLeft(4)
+            fourPointAct()
 
-    # # Calculate the turn rate.
-    # turn_rate = PROPORTIONAL_GAIN * deviation
-
-    # # Set the drive base speed and turn rate.
-    # robot.drive(DRIVE_SPEED, turn_rate)
-
-    # # You can wait for a short time or do other things in this loop.
-    # wait(10)
-    startLine()
-    goLeft(1)
+def fourPointAct():
+    if(objectDetection()==0):
+        #다음줄
+        return
+    elif(objectDetection()==1):
+        seeGarbage()
+        goGarbageLeft()
+        robot.turn(180)
+        goRight(3)
+        robot.turn(-90)
+        lineOut(1)
+        if(garbage==1):
+            goRed()
+            goStart()
+            goLeft(4)
+            fourPointAct()
+        elif(garbage==2):
+            goBlue()
+            goStart()
+            goLeft(4)
+            fourPointAct()
 
 
