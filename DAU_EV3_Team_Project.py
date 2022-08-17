@@ -89,7 +89,15 @@ def turnLine():
         if(right_cs.color()==Color.BLACK and left_cs.color()==Color.BLACK):
             robot.stop()
             break
-        robot.straight(-10)
+        robot.straight(-5)
+    return
+
+def turnLineWhite():
+    while True:
+        if(right_cs.color()==Color.WHITE or left_cs.color()==Color.WHITE):
+            robot.stop()
+            break
+        robot.straight(-5)
     return
 
 def goLeft(num):
@@ -108,6 +116,24 @@ def goLeft(num):
             robot.stop()
             break
     wait(10)
+
+def goLeftR(num):
+    savePoint=0
+    countCheck=0
+    while True:
+        deviation = threshold-left_cs.reflection() 
+        turn_rate = PROPORTIONAL_GAIN * deviation
+        robot.drive(DRIVE_SPEED, turn_rate)
+        if(right_cs.color()==Color.BLACK and countCheck==0):
+            savePoint+=1
+            countCheck=1
+        if(right_cs.color()!=Color.BLACK and countCheck==1):
+            countCheck=0
+        if(savePoint==num and countCheck == 0):
+            robot.stop()
+            break
+    wait(10)
+
 
 def goRight(num):
     savePoint=0
@@ -130,10 +156,10 @@ def goRed(num):
     goLeft(1)
     robot.turn(90)
     while True:
-        deviation = right_cs.reflection() - threshold
+        deviation = left_cs.reflection() - threshold#왼쪽으로 바꿔봐야함
         turn_rate = PROPORTIONAL_GAIN * deviation
         robot.drive(DRIVE_SPEED, turn_rate)
-        if(left_cs.color()==Color.RED):
+        if(right_cs.color()==Color.RED):
             robot.straight(80)
             grap(-1)
             robot.straight(-80)
@@ -145,10 +171,10 @@ def goBlue(num):
     goLeft(2)
     robot.turn(90)
     while True:
-        deviation = right_cs.reflection() - threshold
+        deviation = left_cs.reflection() - threshold#왼쪽으로 바꿔봐야함
         turn_rate = PROPORTIONAL_GAIN * deviation
         robot.drive(DRIVE_SPEED, turn_rate)
-        if(left_cs.color()==Color.BLUE):
+        if(right_cs.color()==Color.BLUE):
             robot.straight(80)
             grap(-1)
             robot.straight(-80)
@@ -157,15 +183,15 @@ def goBlue(num):
     wait(10)
 
 def goStart():
-    turnLine()
+    turnLineWhite()
     robot.turn(90)
     if(garbage==1):
-        goLeft(2)
+        goLeftR(1)
         robot.turn(90)
         lineOut(1)
         return
     elif(garbage==2):
-        goLeft(3)
+        goLeftR(2)
         robot.turn(90)
         lineOut(1)
         return
@@ -266,12 +292,12 @@ def onePointAct():
         if(garbage==1):
             goRed()
             goStart()
-            goLeft(2)
+            goLeft(1)
             twoPointAct()
         elif(garbage==2):
             goBlue()
             goStart()
-            goLeft(2)
+            goLeftR(1)
             twoPointAct()
 
 def twoPointAct():
