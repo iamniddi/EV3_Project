@@ -30,62 +30,73 @@ robot = DriveBase(left_motor, right_motor, wheel_diameter=55.5, axle_track=104)
 
 # BLACK = 9
 # WHITE = 85=4
-BLACK=5
-WHITE = 60
+BLACK=8 #4
+WHITE = 63  #60
 threshold = (BLACK + WHITE) / 2
 
 DRIVE_SPEED = 250
 
-PROPORTIONAL_GAIN = 0.6
+PROPORTIONAL_GAIN = 0.7
 
 global garbage
-garbage = 0
+garbage = 1
 
 def startLine():
     while True:
         robot.drive(DRIVE_SPEED, 0)
-        if(right_cs.color()==Color.BLACK):
-            robot.stop()
+        if(right_cs.color()==Color.BLACK and left_cs.color()!=Color.GREEN and right_cs.color()!=Color.GREEN):
+            #robot.stop()
             break
+    wait(10)
     while True:
         deviation = threshold-left_cs.reflection()
         turn_rate = PROPORTIONAL_GAIN * deviation
         robot.drive(DRIVE_SPEED, -turn_rate)        
         if(right_cs.color()!=Color.BLACK):
-            robot.stop()
+            #robot.stop()
             break
+    wait(10)
     return
 
 def lineOut(num1):
-    op=0
     while True:
         if(num1==0):
             if(right_cs.color()==Color.BLACK and left_cs.color()==Color.BLACK):
                 robot.drive(20, 0)
             else:
-                robot.stop()
                 break
         elif(num1==1):
             if(right_cs.color()==Color.BLACK):
                 robot.drive(20, 0)
             else:
-                robot.stop()
                 break
         
-        elif(num1==2):
+        else:
             if(left_cs.color()==Color.BLACK):
                 robot.drive(20, 0)
             else:
-                robot.stop()
                 break
+    wait(10)
     return
 
-def lineBackOut():
+def lineOut2():
     while True:
-        if(right_cs.color()!=Color.BLACK):
+        if(left_cs.reflection()<threshold):
+            robot.drive(30, 0)
+        else:
+            break
+    wait(10)
+
+def lineBackOut(num):
+    while True:
+        if(right_cs.color()!=Color.BLACK and num == 0):
+            robot.stop()
+            break
+        elif(left_cs.color()!=Color.BLACK and num == 1):
             robot.stop()
             break
         robot.drive(-DRIVE_SPEED, 0)   
+    wait(10)
 
 def turnLine():
     while True:
@@ -93,6 +104,7 @@ def turnLine():
             robot.stop()
             break
         robot.drive(-DRIVE_SPEED, 0)
+    wait(10)
     return
 
 def turnLineWhite():
@@ -102,6 +114,7 @@ def turnLineWhite():
             robot.stop()
             break
         robot.drive(-DRIVE_SPEED, 0)#스피드 200
+    wait(10)
     return
 
 def backRobotLine(speed):
@@ -118,21 +131,22 @@ def backRobotLine(speed):
             robot.stop()
             break
     robot.turn(90)
+    wait(10)
 
-def backRobotLineL(speed):
+def backRobotLineL(speed, num):
     savePoint=0
     countCheck=0
     while True:
         robot.drive(-DRIVE_SPEED*speed, 0)
-        if(left_cs.color()==Color.BLACK and countCheck==0):
+        if(right_cs.color()==Color.BLACK and countCheck==0):
             savePoint+=1
             countCheck=1
-        if(left_cs.color()==Color.WHITE and countCheck==1):
+        if(right_cs.color()==Color.WHITE and countCheck==1):
             countCheck=0
-        if(savePoint==3):
+        if(savePoint==num):
             robot.stop()
             break
-    robot.turn(180)
+    wait(10)
 
 def goLeft(num, speed):
 
@@ -147,9 +161,11 @@ def goLeft(num, speed):
             countCheck=1
         if(right_cs.color()!=Color.BLACK and countCheck==1):
             countCheck=0
+            ev3.speaker.beep()
         if(savePoint==num and countCheck == 0):
             robot.stop()
             break
+    wait(10)
 
 def goBackLeft(num, speed):
     savePoint=0
@@ -168,6 +184,7 @@ def goBackLeft(num, speed):
         if(savePoint==num):
             robot.stop()
             break
+    wait(10)
 
 def goLeftR(num, speed):
     savePoint=0
@@ -181,10 +198,12 @@ def goLeftR(num, speed):
             savePoint+=1
             countCheck=1
         if(right_cs.color()!=Color.BLACK and countCheck==1):
+            wait(5)
             countCheck=0
         if(savePoint==num and countCheck == 0):
             robot.stop()
             break
+    wait(10)
 
 def goRight(num, speed):
     savePoint=0
@@ -197,32 +216,38 @@ def goRight(num, speed):
             savePoint+=1
             countCheck=1
         if(left_cs.color()!=Color.BLACK and countCheck==1):
+            ev3.speaker.beep()
             countCheck=0
         if(savePoint==num and countCheck == 0):
             robot.stop()
             break
+    wait(10)
 
 def goRight2(num, speed):
     savePoint=0
     countCheck=0
     while True:
-        deviation = threshold-right_cs.reflection()
-        turn_rate = PROPORTIONAL_GAIN * deviation
-        robot.drive(DRIVE_SPEED*speed, turn_rate)
+        if(left_cs.reflection()>threshold):
+            deviation = threshold-right_cs.reflection()
+            turn_rate = PROPORTIONAL_GAIN * deviation
+            robot.drive(DRIVE_SPEED*speed, turn_rate)
+        if(left_cs.reflection()<=threshold):
+            robot.drive(DRIVE_SPEED*speed, 0)
         if(left_cs.color()==Color.BLACK and countCheck==0):
             savePoint+=1
             countCheck=1
         if(left_cs.color()!=Color.BLACK and countCheck==1):
+            ev3.speaker.beep()
             countCheck=0
         if(savePoint==num):
-            robot.stop()
             break
+    robot.stop()
 
 def goRightR(num, speed):
     savePoint=0
     countCheck=0
     while True:
-        deviation = threshold-right_cs.reflection()
+        deviation = right_cs.reflection()-threshold
         turn_rate = PROPORTIONAL_GAIN * deviation
         robot.drive(DRIVE_SPEED*speed, turn_rate)
         if(left_cs.color()==Color.BLACK and countCheck==0):
@@ -233,9 +258,12 @@ def goRightR(num, speed):
         if(savePoint==num and countCheck == 0):
             robot.stop()
             break
+    wait(10)
+
+
 
 def goRed(speed):
-    goLeft(1, 0.7)
+    goLeft(1, 1)
     robot.turn(90)
     while True:
         deviation = left_cs.reflection() - threshold#왼쪽으로 바꿔봐야함
@@ -247,20 +275,22 @@ def goRed(speed):
             break
     wait(50)
     grap(-1)
+    wait(10)
 
 def goBlue(speed):
-    goLeft(2, 0.7)
+    goLeft(2, 1)
     robot.turn(90)
     while True:
         deviation = left_cs.reflection() - threshold#왼쪽으로 바꿔봐야함
         turn_rate = PROPORTIONAL_GAIN * deviation
-        robot.drive(DRIVE_SPEED*speed, -turn_rate)
+        robot.drive(DRIVE_SPEED*speed, turn_rate)
         if(right_cs.color()==Color.BLUE):
             robot.stop()
             ev3.speaker.beep()
             break
     wait(50)
     grap(-1)
+    wait(10)
 
 def goStart():
     turnLineWhite()
@@ -275,6 +305,7 @@ def goStart():
         robot.turn(90)
         lineOut(1)
         return
+    wait(10)
 
 def grap(num):
     grab_moter.run_until_stalled(num*200, then=Stop.COAST, duty_limit=50)
@@ -319,6 +350,7 @@ def goGarbageLeft():
             robot.stop()
             break
     grap(1)
+    wait(10)
 
 def goGarbageRight():
     countCheck=0
@@ -342,7 +374,7 @@ def goGarbageRight():
         if(savePoint==1 and countCheck == 0):
             robot.stop()
             break
-    robot.straight(35)
+    robot.straight(40)
     wait(20)
     grap(1)
 
@@ -423,7 +455,7 @@ def seeGarbage():
     print(garbage)
     return garbage
 
-def noLineAct():
+def noLineAct(speed):
     saveLine=0
     savePoint=0
     countCheck=0
@@ -444,9 +476,11 @@ def noLineAct():
             break
     grap(1)
     #lineSet()
+    lineBackOut(0)
+    wait(10)
     while True:
         saveLine-=1
-        robot.drive(-DRIVE_SPEED, 0)
+        robot.drive(-DRIVE_SPEED*speed, 0)
         if(right_cs.color()==Color.BLACK and countCheck==0):
             countCheck=1
             savePoint=1
@@ -454,8 +488,9 @@ def noLineAct():
             countCheck=0
         if(savePoint==1 and countCheck == 0):
             robot.stop()
+            print('잡기 끝')
             break
-    robot.turn(180)
+    wait(10)
     return
 
 def tuenBack():
@@ -465,15 +500,101 @@ def onePointCan():
     goRight(1, 1)
     robot.turn(90)
 
-def goRed1(speed):
+def noLineStright(speed):
     countCheck=0
-    lineOut(0)
-    wait(30)
     while True:
         robot.drive(DRIVE_SPEED*speed, 0)
         if(left_cs.color()==Color.BLACK):
             countCheck=1
         if(left_cs.color()==Color.WHITE and countCheck==1):
+            robot.stop()
+            break
+    wait(10)
+
+def noLineStright2(speed):
+    countCheck=0
+    savePoint=0
+    while True:
+        robot.drive(DRIVE_SPEED*speed, 0)
+        if(left_cs.color()==Color.BLACK and countCheck==0):
+            countCheck=1
+            savePoint+=1
+        if(left_cs.color()!=Color.BLACK and countCheck==1):
+            ev3.speaker.beep()
+            countCheck=0
+        if(savePoint==1 and countCheck==0):
+            robot.stop()
+            break
+    wait(10)
+    robot.straight(40)
+
+def noLineStrightR(speed):
+    countCheck=0
+    while True:
+        robot.drive(DRIVE_SPEED*speed, 0)
+        if(right_cs.color()==Color.BLACK):
+            countCheck=1
+        if(right_cs.color()==Color.WHITE and countCheck==1):
+            robot.stop()
+            break
+    wait(10)
+
+def goRed1(speed):
+    countCheck=0
+    PROPORTIONAL_GAIN_1=PROPORTIONAL_GAIN*1.2
+    print('브레이크')
+    # while True:
+    #     robot.drive(DRIVE_SPEED*speed, 0)
+    #     if(right_cs.color()==Color.RED):
+    #         robot.stop()
+    #         ev3.speaker.beep()
+    #         break
+    
+    redSecondary(speed)
+    grap(-1)
+
+def redSecondary(speed):
+    while True:
+        deviation = threshold-right_cs.reflection()
+        #deviation = threshold-right_cs.reflection()
+        turn_rate = PROPORTIONAL_GAIN_1 * deviation
+        robot.drive(DRIVE_SPEED*speed, turn_rate)
+        if(left_cs.color()==Color.BLACK):
+            #robot.stop()
+            ev3.speaker.beep()
+            break
+    while True:
+        robot.drive(DRIVE_SPEED*speed, 0)
+        if(left_cs.color()==Color.RED):
+            ev3.speaker.beep()
+            robot.stop()
+            break
+    wait(10)
+
+def blueSecondary(speed):
+    while True:
+        deviation = left_cs.reflection() - threshold
+        turn_rate = PROPORTIONAL_GAIN * deviation
+        robot.drive(DRIVE_SPEED*speed, turn_rate)
+        if(right_cs.color()==Color.BLACK):
+            ev3.speaker.beep()
+            #ev3.speaker.beep()
+            break
+    while True:
+        robot.drive(DRIVE_SPEED*speed, 0)
+        if(left_cs.color()==Color.BLUE):
+            ev3.speaker.beep()
+            robot.stop()
+            break
+    wait(10)
+
+def goBlue1(speed):
+    countCheck=0
+    while True:
+        robot.drive(DRIVE_SPEED*speed, 0)
+        if(right_cs.color()==Color.BLACK):
+            countCheck=1
+        if(right_cs.color()==Color.WHITE and countCheck==1):
             robot.stop()
             break
     print('브레이크')
@@ -483,26 +604,22 @@ def goRed1(speed):
     #         robot.stop()
     #         ev3.speaker.beep()
     #         break
-    while True:
-        deviation = threshold-right_cs.reflection()
-        turn_rate = PROPORTIONAL_GAIN * deviation
-        robot.drive(DRIVE_SPEED*speed, turn_rate)
-        if(left_cs.color()==Color.RED):
-            robot.stop()
-            ev3.speaker.beep()
-            break
-    wait(50)
+    robot.straight(70)
+    robot.turn(-90)
+    goLeft(1, 1)
+    robot.turn(90)
+    blueSecondary(speed)
     grap(-1)
+    wait(10)
 
 def onePointAct():
-    ev3.speaker.beep()
     wait(50)
     print('1번액트')
     startLine()
+
     goLeft(1, 1)
     if(objectDetection()==0):
         goLeft(1, 1)
-        ev3.speaker.beep(800,10)
         twoPointAct()
         return
     elif(objectDetection()==1):
@@ -511,7 +628,7 @@ def onePointAct():
         robot.turn(180)
         lineOut(2)
         goRight(1, 1)
-        robot.straight(70)
+        robot.straight(40)
         robot.turn(-90)
 
         lineOut(1)
@@ -570,7 +687,6 @@ def onePointAct():
 #             twoPointAct()
 
 def twoPointAct():
-    ev3.speaker.beep()
     wait(50)
     print('2번액트')
     if(objectDetection()==0):
@@ -583,7 +699,7 @@ def twoPointAct():
         robot.turn(180)
         lineOut(2)
         goRight(2, 1)
-        robot.straight(70)
+        robot.straight(40)
         robot.turn(-90)
         lineOut(1)
 
@@ -605,7 +721,8 @@ def twoPointAct():
             # goLeft(3, 1)
             # threePointAct()
 
-            goRed(0.5)
+            goBlue(0.5)
+            
             backRobotLine(0.5)
             goLeftR(1,1)
             robot.turn(90)
@@ -638,11 +755,12 @@ def twoPointAct():
 #             goLeft(3, 1)
 #             threePointAct()
 def threePointAct():
-    ev3.speaker.beep()
-    wait(50)
+    #ev3.speaker.beep()
     print('3번액트')
     if(objectDetection()==0):
+        lineOut(2)
         goLeft(1, 1)
+        wait(20)
         fourPointAct()
         return
     elif(objectDetection()==1):
@@ -651,7 +769,7 @@ def threePointAct():
         robot.turn(180)
         lineOut(2)
         goRight(3, 1)
-        robot.straight(70)
+        robot.straight(40)
         robot.turn(-90)
         lineOut(1)
         if(garbage==1):
@@ -672,7 +790,7 @@ def threePointAct():
             # goLeft(4, 1)
             # fourPointAct()
 
-            goRed(0.5)
+            goBlue(0.5)
             backRobotLine(0.5)
             goLeftR(1,1)
             robot.turn(90)
@@ -680,43 +798,50 @@ def threePointAct():
             fourPointAct()
 
 def fourPointAct():
-    ev3.speaker.beep()
-    wait(50)
+    #ev3.speaker.beep()
+    #wait(50)
     print('4번액트')
     if(objectDetection()==0):
         # #다음줄
-        # return
-        print('끝')
+        robot.turn(180)
+        wait(10)
+        fivePointAct1()
     elif(objectDetection()==1):
         print('마지막')
         seeGarbage()
-        noLineAct()
+        noLineAct(1)
+        robot.turn(180)
         lineOut(2)
         goRight(3, 1)
-        robot.straight(70)
+        robot.straight(40)
         robot.turn(-90)
         lineOut(1)
         if(garbage==1):
+            print('1번 실행함 ㅋㅋ')
             # goRed(1)
             # goStart()
             # goLeft(5, 1)
             # fourPointAct()
-            goRed(0.5)
-            backRobotLine(0.5)
-            robot.turn(90)
+            goRed(1)
+            backRobotLineL(0.5, 2)
+            robot.turn(180)
+            fivePointAct2()
         elif(garbage==2):
+            print('2번 실행함 ㅋㅋ')
             # goBlue(1)
             # goStart()
             # goLeft(5, 1)
-            goBlue(0.5)
-            backRobotLine(0.5)
-            robot.straight(20)
+            goBlue(0.6)
+            backRobotLineL(0.5, 2)
+            robot.straight(60)
             robot.turn(90)
+            lineOut(2)
             goRight(1,1)
             robot.turn(90)
-            return
+            fivePointAct2()
 
 def fivePointAct1():
+    print('5-1번액트')
     # robot.turn(180)
     # lineOut(2)
     goRight(2, 1)
@@ -724,17 +849,189 @@ def fivePointAct1():
     robot.turn(-90)
     goGarbageRight()
     robot.turn(90)
-    goRed1(0.5)
-    backRobotLineL(0.5)
-    sixPointAct()
+    wait(10)
+    if(garbage==1):
+        goRed3()
+        sixPointAct()
+    elif(garbage==2):
+        goBlue3()
+        sixPointAct()
 
-def sixPointAct():
+def goRed3():
+    lineOut(0)
+    wait(30)
+    noLineStright(0.6)
+    goRed1(0.4)
+    backRobotLineL(0.5, 3)
+    robot.turn(180)
+    wait(10)
+
+def goBlue3():
+    lineOut(0)
+    goBlue1(0.5)
+    backRobotLineL(0.5, 2)
+    #robot.straight(50)
+    noLineStrightR(0.5)
+    robot.turn(90)
+    goRight(1, 1)
+    robot.turn(90)
+    noLineStright(0.6)
+    wait(10)
+
+def fivePointAct2():
+    print('5-2번액트')
+    wait(10)
     if(objectDetection()==0):
-        return
+        noLineStrightR(0.6)
     elif(objectDetection()==1):
         seeGarbage()
-        goGarbageLeft()
+        noLineAct(0.6)
+        if(garbage==1):
+            robot.turn(180)
+            redSecondary(0.6)
+            wait(10)
+            grap(-1)
+            backRobotLineL(0.5, 3)
+            robot.turn(180)
+            sixPointAct()
+        elif(garbage==2):
+            noLineStrightR(0.5)
+            robot.turn(90)
+            goLeft(1, 1)
+            robot.turn(90)
+            blueSecondary(0.6)
+            grap(-1)
+            backRobotLineL(0.5, 2)
+            #noLineStrightR(0.5)
+            robot.straight(60)
+            robot.turn(90)
+            lineOut(2)
+            goRight(1, 1)
+            robot.straight(-40)
+            robot.turn(90)
+            wait(10)
+            lineOut(0)
+            noLineStrightR(0.6)
+            sixPointAct()
 
+def goBlue4():
+    robot.turn(-90)
+    goLeft(1, 1)
+    robot.turn(90)
+    blueSecondary(0.6)
+    grap(-1)
+    backRobotLineL(0.5, 2)
+    #noLineStrightR(0.5)
+    robot.straight(60)
+    robot.turn(90)
+    lineOut(2)
+    goRight(1, 1)
+    robot.straight(-25)
+    robot.turn(90)
+    wait(10)
+    lineOut(0)
+    noLineStrightR(0.6)
+
+def goRed4():
+    redSecondary(0.6)
+    wait(10)
+    grap(-1)
+    backRobotLineL(0.5, 3)
+    robot.turn(180)
+
+def sixPointAct():
+    print('6번액트')
+    if(objectDetection()==0):
+        lineOut(1)
+        goLeft(1,1)
+        sevenPointAct()
+    elif(objectDetection()==1):
+        lineOut(1)
+        seeGarbage()
+        goGarbageLeft()
+        robot.turn(-180)
+        wait(10)
+        goRight2(1, 1)
+        lineOut(0)
+        wait(10)
+        if(garbage==1):
+            noLineStright2(0.6)
+            goRed4()
+            lineOut(1)
+            goLeft(1,1)
+            sevenPointAct()
+        elif(garbage==2):
+            noLineStright2(0.6)
+            goBlue4()
+            lineOut(1)
+            goLeft(1,1)
+            sevenPointAct()
+
+def sevenPointAct():
+    print('6번액트')
+    if(objectDetection()==0):
+        lineOut(1)
+        goLeft(1,1)
+        eightPointAct()
+    elif(objectDetection()==1):
+        lineOut(1)
+        seeGarbage()
+        goGarbageLeft()
+        robot.turn(-180)
+        wait(10)
+        lineOut(2)
+        goRight2(2, 1)
+        lineOut(0)
+        if(garbage==1):
+            wait(10)
+            noLineStright2(0.6)
+        
+            lineOut(2)
+            goRed4()
+            lineOut(1)
+            goLeft(2,1)
+            eightPointAct()
+        elif(garbage==2):
+            wait(10)
+            noLineStright2(0.6)
+            lineOut(2)
+            goBlue4()
+            lineOut(1)
+            goLeft(2,1)
+            eightPointAct()
+
+def eightPointAct():
+    print('8번액트')
+    if(objectDetection()==0):
+        robot.turn(180)
+        wait(10)
+        return
+    elif(objectDetection()==1):
+        print('마지막')
+        seeGarbage()
+        noLineAct(1)
+        robot.turn(180)
+        lineOut(2)
+        goRight2(2, 1)
+        wait(10)
+        if(garbage==1):
+            print('1번 실행함 ㅋㅋ')
+            noLineStright2(0.6)
+        
+            lineOut(2)
+            goRed4()
+            lineOut(1)
+            goLeft(2,1)
+            eightPointAct()
+        elif(garbage==2):
+            print('2번 실행함 ㅋㅋ')
+            noLineStright2(0.6)
+            lineOut(2)
+            goBlue4()
+            lineOut(1)
+            goLeft(2,1)
+            eightPointAct()
+            
 # b=0
 # while True:
 #     b+=1
@@ -745,7 +1042,7 @@ def sixPointAct():
 #         break
 # while True:
 #     print(ultra.distance())
-ev3.speaker.beep()
+#ev3.speaker.beep()
 
 def rateSet():
     while True:
@@ -809,5 +1106,6 @@ def lineSet():
 #     wait(2000)
 #     break
 grap(-1)
-onePointAct()
-#fivePointAct1()
+#onePointAct()
+fivePointAct2()
+#goRight2(1, 1)
